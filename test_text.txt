@@ -1,0 +1,3 @@
+spocitaj pocet znakov
+pocet slov
+aj pocet riadkov

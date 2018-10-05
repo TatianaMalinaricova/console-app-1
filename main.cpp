@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <fstream>
 #include <iterator>
 #include "counter.h"
 
@@ -23,18 +24,18 @@ int main(int argc, char *argv[]) //pocet parametrov, pole parametrov
 			std::cout << "Pocitanie znakov v texte. Zadajte retazec" << std::endl;
 			getline(std::cin, retazec);
 			std::cout << "Pocet znakov v retazci je: " << counter_c(retazec) << std::endl;
-			//	std::iftream f(argv[1]);
-			//	std::istream_iterator<char> my_it;
-			//	std::distance(std::istream_iterator<char>(s));
 		}
+
 		if (std::string(argv[1]) == ("-w"))
 		{
 			//pocitanie slov v texte
+			std::string line;
 			std::cout << "Pocitanie slov v zadanom texte. Zadajte retazec" << std::endl;
-			getline(std::cin, retazec);
-			std::cout << "Pocet slov v retazci je: " << counter_c(retazec) << std::endl;
-
+			getline(std::cin,retazec);
+		//	retazec += std::string(line + " ");
+			std::cout << "Pocet slov v retazci je: " << counter_w(retazec+ " ") << std::endl;
 		}
+			
 		if (std::string(argv[1]) == ("-l"))
 		{
 			//pocitanie riadkov v texte
@@ -50,5 +51,53 @@ int main(int argc, char *argv[]) //pocet parametrov, pole parametrov
 			std::cout << "Pocet riadkov je: " << counter_l(retazec) << std::endl;
 		}
 	}
+
+	else if (argc == 3)
+	{
+			std::string subornazov;
+			subornazov = std::string(argv[2]);
+			std::fstream subor;
+			subor.open(subornazov, std::fstream::in);
+			std::string line;
+			if (!subor.is_open()) {
+				std::cout << "Subor sa nepodarilo otvorit." << std::endl;
+			}
+
+			if (std::string(argv[1]) == ("-c"))
+			{
+				//nacitanie textu do premennej typu string
+				while (getline(subor, line)) {
+					retazec += line;
+				}
+				subor.close();
+				std::cout << "Pocet znakov v subore je: " << counter_c(retazec) << std::endl;
+			}
+			
+			if (std::string(argv[1]) == ("-w"))
+			{
+				//pocitanie slov v texte
+				while (getline(subor, line)) { 
+				//	retazec += line;
+					retazec += std::string(line + " ");
+				}
+				subor.close();
+				std::cout << "Pocet slov v subore je: " << counter_w(retazec) << std::endl;
+			}
+
+			if (std::string(argv[1]) == ("-l"))
+			{
+				//pocitanie riadkov v texte
+				char c;
+				while (!subor.eof())
+				{
+					subor.get(c);
+					retazec += c;
+				}
+				std::cout << retazec;
+				subor.close();
+				std::cout << "Pocet riadkov v subore je: " << counter_l(retazec) << std::endl;
+			}	
+	}
+
 	return 0;
 }

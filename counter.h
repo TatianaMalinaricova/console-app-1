@@ -12,22 +12,30 @@ int counter_c(std::string retazec)
 
 int counter_w(std::string retazec)
 {
-	//pocitanie slov v texte
+	int i = 0;
 	int poc = 0;
-	char nasled;
-	for (int i = 0; i < int(retazec.length()); i++)
+
+	//preskoci medzery pred slovom
+	while (isspace(retazec.at(i))) {
+		i++;
+	}
+	for (;i < int(retazec.length()); i++)
 	{
-		nasled = retazec.at(i);
-		if (isspace(retazec[i]))
+		if (isspace(retazec[i])) {
 			poc++;
+			if ((isspace(retazec[i+1])) && (retazec[i + 2] == '\0')) 
+				poc--;
+		}
+			
 	}
 	return poc;
+
 }
 
 int counter_l(std::string retazec)
 {
 	//pocitanie riadkov v texte
-	int poc = 0;
+	int poc = 1;
 
 	for (int i = 0; i < retazec.size(); i++)
 	{
