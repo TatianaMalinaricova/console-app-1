@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) //pocet parametrov, pole parametrov
 					subor.get(c);
 					retazec += c;
 				}
-				std::cout << retazec;
+	
 				subor.close();
 				std::cout << "Pocet riadkov v subore je: " << counter_l(retazec) << std::endl;
 			}	
