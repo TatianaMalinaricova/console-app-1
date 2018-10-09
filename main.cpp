@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) //pocet parametrov, pole parametrov
 			//pocitanie znakov v texte
 			std::cout << "Pocitanie znakov v texte. Zadajte retazec" << std::endl;
 			getline(std::cin, retazec);
-			std::cout << "Pocet znakov v retazci je: " << counter_c(retazec) << std::endl;
+			std::cout << "Pocet znakov v retazci je: " << spocitaj<_char>(retazec) << std::endl;
 		}
 
 		if (std::string(argv[1]) == ("-w"))
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) //pocet parametrov, pole parametrov
 			std::cout << "Pocitanie slov v zadanom texte. Zadajte retazec" << std::endl;
 			getline(std::cin,retazec);
 		//	retazec += std::string(line + " ");
-			std::cout << "Pocet slov v retazci je: " << counter_w(retazec+ " ") << std::endl;
+			std::cout << "Pocet slov v retazci je: " << spocitaj<_word>(retazec+" ") << std::endl;
 		}
 			
 		if (std::string(argv[1]) == ("-l"))
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) //pocet parametrov, pole parametrov
 				if (c == '\t')
 					break;
 			}
-			std::cout << "Pocet riadkov je: " << counter_l(retazec) << std::endl;
+			std::cout << "Pocet riadkov je: " << spocitaj<_line>(retazec) << std::endl;
 		}
 	}
 
