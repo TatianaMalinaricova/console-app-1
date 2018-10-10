@@ -23,24 +23,20 @@ typedef struct _char : public std::string
 
 typedef struct _word : public std::string
 {
-	_word(std::string retazec) : std::string(retazec) {}
+	_word(std::string retazec) : std::string(retazec){}
 	int spocitaj()
 	{
 		int i = 0;
-		int poc = 0;
+		int poc = 1;
 
 		//preskoci medzery pred slovom
-		while (isspace(at(i))) {
+		while ( isspace(at(i)) ) {
 			i++;
 		}
-		for (; i < int(length()); i++)
+		for (; i < int(length()-1); i++)
 		{
-			if (isspace(at(i))) {
+			if (isspace(at(i)) && ((at(i+1)!= ' ')) )
 				poc++;
-				if ((isspace(at(i + 1))) && (at(i + 2) == '\0'))
-					poc--;
-			}
-
 		}
 		return poc;
 	}
@@ -48,7 +44,7 @@ typedef struct _word : public std::string
 
 typedef struct _line : public std::string
 {
-	_line(std::string retazec) : std::string(retazec) {}
+	_line(std::string retazec) : std::string(retazec){}
 	int spocitaj()
 	{
 		//pocitanie riadkov v texte

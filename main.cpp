@@ -32,8 +32,7 @@ int main(int argc, char *argv[]) //pocet parametrov, pole parametrov
 			std::string line;
 			std::cout << "Pocitanie slov v zadanom texte. Zadajte retazec" << std::endl;
 			getline(std::cin,retazec);
-		//	retazec += std::string(line + " ");
-			std::cout << "Pocet slov v retazci je: " << spocitaj<_word>(retazec+" ") << std::endl;
+			std::cout << "Pocet slov v retazci je: " << spocitaj<_word>(retazec) << std::endl;
 		}
 			
 		if (std::string(argv[1]) == ("-l"))
