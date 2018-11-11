@@ -109,28 +109,25 @@ LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 		bitmap.GetBitmap(&bi);
 
 		//skalovanie obrazka
-		float fw = 1.;
-		float fh = 1.;
-		float f = 1.;
-		fh = (float)r.Height() / (float)bi.bmHeight;
-		fw = (float)r.Width() / (float)bi.bmWidth;
+		float fh = (float)r.Height() / (float)bi.bmHeight;
+		float fw = (float)r.Width() / (float)bi.bmWidth;
 		int r_x = r.Width();int r_y = r.Height();
 		float tmp_x = 0;float tmp_y = 0;
 
-		if ((bi.bmWidth > r.Width()) && (bi.bmHeight <= r.Height()))
+		if ((bi.bmWidth > r_x) && (bi.bmHeight <= r_y))
 		{
 			tmp_x = (float)bi.bmWidth*((float)bi.bmWidth / (float)r_x);
 			tmp_y = (float)bi.bmHeight*((float)bi.bmWidth / (float)r_x);
 		}
-		if ((bi.bmHeight > r.Height()) && (bi.bmWidth <= r.Width()))
+		if ((bi.bmHeight > r_y) && (bi.bmWidth <= r_x))
 		{
 			tmp_x = (float)bi.bmWidth*((float)bi.bmHeight / (float)r_y);
 			tmp_y = (float)bi.bmHeight*((float)bi.bmHeight / (float)r_y);
 		}
 
-		if (((bi.bmWidth < r.Width()) && (bi.bmHeight < r.Height())) || ((bi.bmWidth > r.Width()) && (bi.bmHeight > r.Height())))
+		if (((bi.bmWidth < r_x) && (bi.bmHeight < r_y)) || ((bi.bmWidth > r_x) && (bi.bmHeight > r_y)))
 		{
-			if (r.Height() > r.Width())
+			if (r_y > r_x)
 			{
 				tmp_x = (float)bi.bmWidth*((float)bi.bmWidth / (float)r_x);
 				tmp_y = (float)bi.bmHeight*((float)bi.bmWidth / (float)r_x);
@@ -141,11 +138,25 @@ LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 				tmp_y = (float)bi.bmHeight*((float)bi.bmHeight / (float)r_y);
 			}
 		}
+		//problem je ked je sirka a vyska okna rovnaka a bezprostredne po tom ked sa zvacsi(obrazok na sirku) a zmensi (obrazok na sirku)
 
-		int m_x = m_ptImage.x;
-		int m_y = m_ptImage.y;
+		//aby boli pekne farby
+		pDC->SetStretchBltMode(HALFTONE);
 
-		pDC->StretchBlt(0,0, r.Width(), r.Height(), &mDC,0,0, tmp_x*fw, tmp_y*fh,SRCCOPY);
+/*		if (((bi.bmHeight > bi.bmWidth) && (bi.bmHeight > r_y)) || (bi.bmHeight > bi.bmWidth) && (bi.bmHeight < r_y))							//obr je na vysku
+		{
+			tmp_x = (float)bi.bmWidth*((float)bi.bmHeight / (float)r_y);
+			tmp_y = (float)bi.bmHeight*((float)bi.bmHeight / (float)r_y);
+		}
+		if (((bi.bmHeight < bi.bmWidth) && (bi.bmWidth > r_x)) || ((bi.bmHeight < bi.bmWidth) && (bi.bmWidth < r_x)))
+		{
+			tmp_x = (float)bi.bmWidth*((float)bi.bmWidth / (float)r_x);
+			tmp_y = (float)bi.bmHeight*((float)bi.bmWidth / (float)r_x);
+		}
+*/		
+		//toto by malo byt uz s tym novym oknom ale nefunguje to, usekava to cast obrazku
+	//	pDC->StretchBlt(m_ptImage.x, m_ptImage.y, r.Width(), r.Height(), &mDC, m_ptImage.x, m_ptImage.y, tmp_x*fw, tmp_y*fh,SRCCOPY);
+		pDC->StretchBlt(0,0, r.Width(), r.Height(), &mDC,0,0, tmp_x*fw, tmp_y*fh, SRCCOPY);
 		mDC.SelectObject(p_Oldbitmap);
 
 		p_image->Attach((HBITMAP)bitmap.Detach());
