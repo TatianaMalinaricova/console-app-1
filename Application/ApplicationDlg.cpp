@@ -9,7 +9,6 @@
 #include <utility>
 #include <tuple>
 #include <vector>
-#include <stdio.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -57,7 +56,6 @@ CApplicationDlg::CApplicationDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_APPLICATION_DIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-	image = new CImage();
 }
 
 void CApplicationDlg::DoDataExchange(CDataExchange* pDX)
@@ -93,12 +91,81 @@ LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 	LPDRAWITEMSTRUCT lpDI = (LPDRAWITEMSTRUCT)wParam;
 
 	CDC * pDC = CDC::FromHandle(lpDI->hDC);
-	::MessageBox(NULL, __T("Chyba pri zobrazeni file dialogu."), __T("Error"), MB_OK);
-
+	
 	//DRAW BITMAP
+	if (p_image != nullptr) {
 
-	return S_OK;
+		CBitmap bitmap;
+		CDC mDC;
+		CBitmap *p_Oldbitmap;
+		BITMAP  bi;
+
+		bitmap.Attach(p_image->Detach());
+		mDC.CreateCompatibleDC(pDC);
+		
+		CRect r(lpDI->rcItem);
+
+		p_Oldbitmap = mDC.SelectObject(&bitmap);
+		bitmap.GetBitmap(&bi);
+
+		//skalovanie obrazka
+		float fw = 1.;
+		float fh = 1.;
+		float f = 1.;
+		fh = (float)r.Height() / (float)bi.bmHeight;
+		fw = (float)r.Width() / (float)bi.bmWidth;
+		int r_x = r.Width();int r_y = r.Height();
+		float tmp_x = 0;float tmp_y = 0;
+
+		if ((bi.bmWidth > r.Width()) && (bi.bmHeight <= r.Height()))
+		{
+			tmp_x = (float)bi.bmWidth*((float)bi.bmWidth / (float)r_x);
+			tmp_y = (float)bi.bmHeight*((float)bi.bmWidth / (float)r_x);
+		}
+		if ((bi.bmHeight > r.Height()) && (bi.bmWidth <= r.Width()))
+		{
+			tmp_x = (float)bi.bmWidth*((float)bi.bmHeight / (float)r_y);
+			tmp_y = (float)bi.bmHeight*((float)bi.bmHeight / (float)r_y);
+		}
+
+		if (((bi.bmWidth < r.Width()) && (bi.bmHeight < r.Height())) || ((bi.bmWidth > r.Width()) && (bi.bmHeight > r.Height())))
+		{
+			if (r.Height() > r.Width())
+			{
+				tmp_x = (float)bi.bmWidth*((float)bi.bmWidth / (float)r_x);
+				tmp_y = (float)bi.bmHeight*((float)bi.bmWidth / (float)r_x);
+			}
+			else
+			{
+				tmp_x = (float)bi.bmWidth*((float)bi.bmHeight / (float)r_y);
+				tmp_y = (float)bi.bmHeight*((float)bi.bmHeight / (float)r_y);
+			}
+		}
+
+		int m_x = m_ptImage.x;
+		int m_y = m_ptImage.y;
+
+		pDC->StretchBlt(0,0, r.Width(), r.Height(), &mDC,0,0, tmp_x*fw, tmp_y*fh,SRCCOPY);
+		mDC.SelectObject(p_Oldbitmap);
+
+		p_image->Attach((HBITMAP)bitmap.Detach());
+
+		return S_OK;
+	}
+	
 }
+
+void CApplicationDlg::OnSize(UINT nType,int cx,int cy)
+{
+	if (::IsWindow(m_ctrlImage.GetSafeHwnd()))
+	{
+		m_ctrlImage.MoveWindow(0, 0, cx, cy);
+	}
+	__super::OnSize(nType, cx, cy);
+	
+	Invalidate();
+}
+
 
 void CApplicationDlg::OnClose()
 {
@@ -136,13 +203,13 @@ BOOL CApplicationDlg::OnInitDialog()
 
 	// TODO: Add extra initialization here
 	CRect rct;
-
 	CRect rctClient;
 	GetClientRect(&rctClient);
 	
 	m_ctrlImage.GetWindowRect(&rct);
 	m_ptImage.x = rctClient.Width() - rct.Width();
 	m_ptImage.y = rctClient.Height() - rct.Height();
+
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -186,52 +253,6 @@ void CApplicationDlg::OnPaint()
 	else
 	{
 		CDialogEx::OnPaint();
-
-		int img_x = image->GetWidth();
-		int img_y = image->GetHeight();
-
-		/*	//skalovanie obrazku podla dialogoveho okna
-		float factor = 1;
-		if ((img_x <= dlg_x) && (img_y <= dlg_y)) {
-		if (dlg_x > dlg_y) {
-		factor = (float)dlg_y / (float)img_y;
-		}
-		else {
-		factor = (float)dlg_x / (float)img_x;
-		}
-		}
-		if ((img_x <= dlg_x) && (img_y > dlg_y)) {
-		factor = (float)dlg_y / (float)img_y;
-		}
-		if ((img_x > dlg_x) && (img_y <= dlg_y)) {
-		factor = (float)dlg_x / (float)img_x;
-		}
-		if ((img_x > dlg_x) && (img_y > dlg_y)) {
-		if (img_x > img_y) {
-		factor = (float)dlg_y / (float)img_y;
-		}
-		else {
-		factor = (float)dlg_x / (float)img_x;
-		}
-		}
-
-		*/
-
-		//	CDC *screenDC = GetDC();
-		CDC *pDC = GetDC();
-		CDC mDC;
-		mDC.CreateCompatibleDC(pDC);
-		CBitmap bitmap;
-		bitmap.CreateCompatibleBitmap(pDC, img_x, img_y);
-
-		CBitmap *p_bitmap = mDC.SelectObject(&bitmap);
-		mDC.SetStretchBltMode(HALFTONE);
-		image->StretchBlt(mDC.m_hDC, 0, 0, img_x, img_y, 0, 0, img_x, img_y, SRCCOPY);
-		mDC.SelectObject(p_bitmap);
-
-		m_ctrlImage.SetBitmap((HBITMAP)bitmap.Detach());
-		ReleaseDC(pDC);
-		
 	}
 }
 
@@ -244,20 +265,31 @@ HCURSOR CApplicationDlg::OnQueryDragIcon()
 
 void CApplicationDlg::OnFileOpen()
 {
+	//GET FILE NAME AND CREATE GDIPLUS BITMAP
 	// vytvorime file dialog na iba citanie a prepisom promptu, s filtrom .jpg a .png
-	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("Jpg Files (*.jpg)|*.jpg|Png Files (*.png)|*.png||"));
-	
-	// zobrazi file dialog
-	if (dlg.DoModal() == IDOK) {
-		path_name = dlg.GetPathName();
-		OnPaint();
-		image->Load(path_name);
+	CFileDialog file_dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("Jpg Files (*.jpg)|*.jpg|Png Files (*.png)|*.png||"));
 
+	// zobrazi file dialog
+	if (file_dlg.DoModal() == IDOK) {
+		CString path_name = file_dlg.GetPathName();
+	
+		// rusenie objektu CImage pred vytvorenim noveho
+		if (p_image != nullptr)
+		{
+			delete p_image;
+			p_image = nullptr;
+		}
+		p_image = new CImage();
+		p_image->Load(path_name);
+
+		//prekreslenie, zavolane po OnDrawImage
+		Invalidate();
 	}
 	else {
 		::MessageBox(NULL, __T("Chyba pri zobrazeni file dialogu."), __T("Error"), MB_OK);
 	}
 }
+
 
 void CApplicationDlg::OnUpdateFileOpen(CCmdUI *pCmdUI)
 {
@@ -267,7 +299,7 @@ void CApplicationDlg::OnUpdateFileOpen(CCmdUI *pCmdUI)
 
 void CApplicationDlg::OnFileClose()
 {
-
+	
 }
 
 

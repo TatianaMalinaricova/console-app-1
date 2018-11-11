@@ -41,8 +41,7 @@ public:
 // Implementation
 protected:
 	HICON m_hIcon;
-	CString path_name;
-	CImage *image=nullptr;
+	CImage *p_image = nullptr;
 	// Generated message map functions
 	BOOL OnInitDialog() override;
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
@@ -51,6 +50,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 public:
+	afx_msg void OnSize(UINT nType,int cx, int cy);
 	afx_msg void OnFileOpen();
 	afx_msg void OnUpdateFileOpen(CCmdUI *pCmdUI);
 	afx_msg void OnFileClose();
@@ -60,7 +60,9 @@ public:
 	afx_msg void OnDestroy();
 protected:
 	CStaticImage m_ctrlImage;
+	CStaticImage m_ctrlImage2;
 	CPoint m_ptImage;
+	CPoint m_ptImage2;
 public:
 	afx_msg void OnStnClickedImage();
 };
