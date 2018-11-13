@@ -23,6 +23,11 @@ void CStaticImage::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	GetParent()->SendMessage( CApplicationDlg::WM_DRAW_IMAGE, (WPARAM)lpDrawItemStruct);
 }
 
+void CStaticHistogram::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
+{
+	GetParent()->SendMessage(CApplicationDlg::WM_DRAW_HISTOGRAM, (WPARAM)lpDrawItemStruct);
+}
+
 // CAboutDlg dialog used for App About
 
 class CAboutDlg : public CDialogEx
@@ -62,6 +67,7 @@ void CApplicationDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_IMAGE, m_ctrlImage);
+	DDX_Control(pDX, IDC_HIST, m_ctrlHist);
 }
 
 BEGIN_MESSAGE_MAP(CApplicationDlg, CDialogEx)
@@ -76,6 +82,7 @@ BEGIN_MESSAGE_MAP(CApplicationDlg, CDialogEx)
 	ON_WM_SIZE()
 	ON_WM_SIZING()
 	ON_MESSAGE(WM_DRAW_IMAGE, OnDrawImage)
+	ON_MESSAGE(WM_DRAW_HISTOGRAM, OnDrawHistogram)
 	ON_WM_DESTROY()
 	ON_STN_CLICKED(IDC_IMAGE, &CApplicationDlg::OnStnClickedImage)
 END_MESSAGE_MAP()
@@ -85,6 +92,22 @@ void CApplicationDlg::OnDestroy()
 {
 	Default();
 }
+
+LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
+{
+	LPDRAWITEMSTRUCT lpDI = (LPDRAWITEMSTRUCT)wParam;
+
+	if (p_image != nullptr) {
+		CDC * pDC = CDC::FromHandle(lpDI->hDC);
+		CRect r(lpDI->rcItem);
+		pDC->Rectangle(r);
+		CBrush brush;
+		brush.CreateSolidBrush(RGB(0, 0, 255));
+		pDC->FillRect(&r, &brush);
+	}
+	return S_OK;
+}
+
 
 LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 {
@@ -143,19 +166,6 @@ LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 		//aby boli pekne farby
 		pDC->SetStretchBltMode(HALFTONE);
 
-/*		if (((bi.bmHeight > bi.bmWidth) && (bi.bmHeight > r_y)) || (bi.bmHeight > bi.bmWidth) && (bi.bmHeight < r_y))							//obr je na vysku
-		{
-			tmp_x = (float)bi.bmWidth*((float)bi.bmHeight / (float)r_y);
-			tmp_y = (float)bi.bmHeight*((float)bi.bmHeight / (float)r_y);
-		}
-		if (((bi.bmHeight < bi.bmWidth) && (bi.bmWidth > r_x)) || ((bi.bmHeight < bi.bmWidth) && (bi.bmWidth < r_x)))
-		{
-			tmp_x = (float)bi.bmWidth*((float)bi.bmWidth / (float)r_x);
-			tmp_y = (float)bi.bmHeight*((float)bi.bmWidth / (float)r_x);
-		}
-*/		
-		//toto by malo byt uz s tym novym oknom ale nefunguje to, usekava to cast obrazku
-	//	pDC->StretchBlt(m_ptImage.x, m_ptImage.y, r.Width(), r.Height(), &mDC, m_ptImage.x, m_ptImage.y, tmp_x*fw, tmp_y*fh,SRCCOPY);
 		pDC->StretchBlt(0,0, r.Width(), r.Height(), &mDC,0,0, tmp_x*fw, tmp_y*fh, SRCCOPY);
 		mDC.SelectObject(p_Oldbitmap);
 
@@ -170,10 +180,15 @@ void CApplicationDlg::OnSize(UINT nType,int cx,int cy)
 {
 	if (::IsWindow(m_ctrlImage.GetSafeHwnd()))
 	{
-		m_ctrlImage.MoveWindow(0, 0, cx, cy);
+		m_ctrlImage.MoveWindow(cx*0.2, 0, cx+(cx*0.2), cy);
 	}
 	__super::OnSize(nType, cx, cy);
 	
+	if (::IsWindow(m_ctrlHist.GetSafeHwnd()))
+	{
+		m_ctrlHist.MoveWindow(0, 0.5*cy, cx-(cx*0.8) , cy);
+	}
+
 	Invalidate();
 }
 
@@ -310,7 +325,9 @@ void CApplicationDlg::OnUpdateFileOpen(CCmdUI *pCmdUI)
 
 void CApplicationDlg::OnFileClose()
 {
-	
+	delete p_image;
+	p_image = nullptr;
+	Invalidate();
 }
 
 

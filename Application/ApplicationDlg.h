@@ -13,6 +13,13 @@ public:
 	void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) override;
 };
 
+class CStaticHistogram : public CStatic
+{
+public:
+	// Overridables (for owner draw only)
+	void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) override;
+};
+
 // CApplicationDlg dialog
 class CApplicationDlg : public CDialogEx
 {
@@ -21,7 +28,7 @@ public:
 	enum
 	{
 		WM_DRAW_IMAGE = (WM_USER + 1),
-		WM_DRAW_HISTOGRAM
+		WM_DRAW_HISTOGRAM 
 	};
 
 	CApplicationDlg(CWnd* pParent = NULL);	// standard constructor
@@ -57,10 +64,11 @@ public:
 	afx_msg void OnUpdateFileClose(CCmdUI *pCmdUI);
 	afx_msg void OnClose();
 	afx_msg LRESULT OnDrawImage(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnDrawHistogram(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnDestroy();
 protected:
 	CStaticImage m_ctrlImage;
-	CStaticImage m_ctrlImage2;
+	CStaticHistogram m_ctrlHist;
 	CPoint m_ptImage;
 	CPoint m_ptImage2;
 public:
