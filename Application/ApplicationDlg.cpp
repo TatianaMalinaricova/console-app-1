@@ -97,17 +97,102 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 {
 	LPDRAWITEMSTRUCT lpDI = (LPDRAWITEMSTRUCT)wParam;
 
+	CDC * pDC = CDC::FromHandle(lpDI->hDC);
+
 	if (p_image != nullptr) {
-		CDC * pDC = CDC::FromHandle(lpDI->hDC);
+		CBitmap bmp;
+		CDC bmDC;
+		BITMAP  bi;
 		CRect r(lpDI->rcItem);
-		pDC->Rectangle(r);
-		CBrush brush;
-		brush.CreateSolidBrush(RGB(0, 0, 255));
-		pDC->FillRect(&r, &brush);
+
+		Histogram();
+
+	//	skalovanie y osi hist = hodnota_hist * vyska_okna / max_hodnota_hist
+		float scaleX = ((float)r.Width()-5) / (float)256;
+		float scaleY = ((float)r.Height()+5) / (float)max_hist;
+
+		int i;
+		for (i = 0; i < 256; i++)
+		{
+			pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height()-5) - (int)(scaleY*(float)m_hR[i]), (RGB(255, 0, 0)));
+			pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height() - 5) - (int)(scaleY*(float)m_hG[i]), (RGB(0, 255, 0)));
+			pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height() - 5) - (int)(scaleY*(float)m_hB[i]), (RGB(0, 0, 255)));
+		}
+		
+		//osi
+		CPen pen(PS_SOLID, 1, RGB(0, 0, 0));
+		pDC->SelectObject(&pen);
+
+		pDC->MoveTo(5, r.Height()-5);
+		pDC->LineTo(5, 0);
+
+		pDC->MoveTo(5, r.Height()-5);
+		pDC->LineTo(r.Width(), r.Height()-5);
 	}
+
+	else
+	{
+		CRect rect(lpDI->rcItem);
+		CBrush brush;
+		brush.CreateSolidBrush(RGB(255, 255, 255));
+
+		pDC->FillRect(&rect, &brush);
+
+		DeleteObject(brush);
+
+		CDC bmDC;
+	}
+
 	return S_OK;
 }
 
+
+void CApplicationDlg::Histogram()
+{
+	int i, j;
+	int width = p_image->GetWidth();
+	int height = p_image->GetHeight();
+	max_hist = 0;
+
+	for (i = 0; i < 256; i++)
+	{
+		m_hR[i] = 0;
+		m_hG[i] = 0;
+		m_hB[i] = 0;
+	}
+
+	int tmpR, tmpG, tmpB;
+	COLORREF pixelColor = 0;
+	
+	for (i = 0; i < width; i++)
+	{
+		for (j = 0; j < height; j++)
+		{
+			pixelColor = p_image->GetPixel(i, j);
+
+			tmpR = int(GetRValue(pixelColor));
+			tmpG = int(GetGValue(pixelColor));
+			tmpB = int(GetBValue(pixelColor));
+
+			m_hR[tmpR]++;
+			m_hG[tmpG]++;
+			m_hB[tmpB]++;
+
+			if ((max_hist < m_hR[tmpR]) || (max_hist < m_hG[tmpG]) || (max_hist < m_hB[tmpB]))
+			{
+				max_hist = m_hR[tmpR];
+
+				if (m_hG[tmpG] > max_hist)
+					max_hist = m_hG[tmpG];
+				if (m_hB[tmpB] > max_hist)
+					max_hist = m_hB[tmpB];
+			}
+					
+
+		}
+	}
+
+}
 
 LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 {
@@ -117,59 +202,39 @@ LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 	
 	//DRAW BITMAP
 	if (p_image != nullptr) {
-
-		CBitmap bitmap;
-		CDC mDC;
-		CBitmap *p_Oldbitmap;
+		CBitmap bmp;
+		CDC bmDC;
+		CBitmap *pOldbmp;
 		BITMAP  bi;
 
-		bitmap.Attach(p_image->Detach());
-		mDC.CreateCompatibleDC(pDC);
-		
+		bmp.Attach(p_image->Detach());
+		bmDC.CreateCompatibleDC(pDC);
+
 		CRect r(lpDI->rcItem);
 
-		p_Oldbitmap = mDC.SelectObject(&bitmap);
-		bitmap.GetBitmap(&bi);
+		pOldbmp = bmDC.SelectObject(&bmp);
+		bmp.GetBitmap(&bi);
 
-		//skalovanie obrazka
-		float fh = (float)r.Height() / (float)bi.bmHeight;
-		float fw = (float)r.Width() / (float)bi.bmWidth;
-		int r_x = r.Width();int r_y = r.Height();
-		float tmp_x = 0;float tmp_y = 0;
+		pDC->FillSolidRect(r.left, r.top, r.Width(), r.Height(), RGB(255, 255, 255));
 
-		if ((bi.bmWidth > r_x) && (bi.bmHeight <= r_y))
-		{
-			tmp_x = (float)bi.bmWidth*((float)bi.bmWidth / (float)r_x);
-			tmp_y = (float)bi.bmHeight*((float)bi.bmWidth / (float)r_x);
-		}
-		if ((bi.bmHeight > r_y) && (bi.bmWidth <= r_x))
-		{
-			tmp_x = (float)bi.bmWidth*((float)bi.bmHeight / (float)r_y);
-			tmp_y = (float)bi.bmHeight*((float)bi.bmHeight / (float)r_y);
-		}
+		double dWtoH = (double)bi.bmWidth / (double)bi.bmHeight;
+		UINT nHeight = r.Height();
+		UINT nWidth = (UINT)(dWtoH * (double)nHeight);
 
-		if (((bi.bmWidth < r_x) && (bi.bmHeight < r_y)) || ((bi.bmWidth > r_x) && (bi.bmHeight > r_y)))
+		if (nWidth > (UINT)r.Width())
 		{
-			if (r_y > r_x)
-			{
-				tmp_x = (float)bi.bmWidth*((float)bi.bmWidth / (float)r_x);
-				tmp_y = (float)bi.bmHeight*((float)bi.bmWidth / (float)r_x);
-			}
-			else
-			{
-				tmp_x = (float)bi.bmWidth*((float)bi.bmHeight / (float)r_y);
-				tmp_y = (float)bi.bmHeight*((float)bi.bmHeight / (float)r_y);
-			}
+			nWidth = r.Width();
+			nHeight = (UINT)(nWidth / dWtoH);
+			_ASSERTE(nHeight <= (UINT)r.Height());
 		}
-		//problem je ked je sirka a vyska okna rovnaka a bezprostredne po tom ked sa zvacsi(obrazok na sirku) a zmensi (obrazok na sirku)
 
 		//aby boli pekne farby
 		pDC->SetStretchBltMode(HALFTONE);
 
-		pDC->StretchBlt(0,0, r.Width(), r.Height(), &mDC,0,0, tmp_x*fw, tmp_y*fh, SRCCOPY);
-		mDC.SelectObject(p_Oldbitmap);
+		pDC->StretchBlt(r.left + (r.Width() - nWidth) / 2, r.top + (r.Height() - nHeight) / 2, nWidth, nHeight, &bmDC, 0, 0, bi.bmWidth, bi.bmHeight, SRCCOPY);
+		bmDC.SelectObject(pOldbmp);
 
-		p_image->Attach((HBITMAP)bitmap.Detach());
+		p_image->Attach((HBITMAP)bmp.Detach());
 
 		return S_OK;
 	}
@@ -180,7 +245,7 @@ void CApplicationDlg::OnSize(UINT nType,int cx,int cy)
 {
 	if (::IsWindow(m_ctrlImage.GetSafeHwnd()))
 	{
-		m_ctrlImage.MoveWindow(cx*0.2, 0, cx+(cx*0.2), cy);
+		m_ctrlImage.MoveWindow(cx*0.2, 0, cx-(cx*0.2), cy);
 	}
 	__super::OnSize(nType, cx, cy);
 	

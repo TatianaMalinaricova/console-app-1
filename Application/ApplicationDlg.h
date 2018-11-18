@@ -23,12 +23,12 @@ public:
 // CApplicationDlg dialog
 class CApplicationDlg : public CDialogEx
 {
-// Construction
+	// Construction
 public:
 	enum
 	{
 		WM_DRAW_IMAGE = (WM_USER + 1),
-		WM_DRAW_HISTOGRAM 
+		WM_DRAW_HISTOGRAM
 	};
 
 	CApplicationDlg(CWnd* pParent = NULL);	// standard constructor
@@ -38,14 +38,14 @@ public:
 	enum { IDD = IDD_APPLICATION_DIALOG };
 #endif
 
-	protected:
+protected:
 	void DoDataExchange(CDataExchange* pDX) override;	// DDX/DDV support
 
 	void OnOK() override {}
 	void OnCancel() override {}
 
 
-// Implementation
+	// Implementation
 protected:
 	HICON m_hIcon;
 	CImage *p_image = nullptr;
@@ -57,7 +57,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 public:
-	afx_msg void OnSize(UINT nType,int cx, int cy);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnFileOpen();
 	afx_msg void OnUpdateFileOpen(CCmdUI *pCmdUI);
 	afx_msg void OnFileClose();
@@ -66,11 +66,17 @@ public:
 	afx_msg LRESULT OnDrawImage(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnDrawHistogram(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnDestroy();
+	void Histogram();
 protected:
 	CStaticImage m_ctrlImage;
 	CStaticHistogram m_ctrlHist;
 	CPoint m_ptImage;
 	CPoint m_ptImage2;
+	int m_hR[256] = {0};
+	int m_hG[256] = {0};
+	int m_hB[256] = {0};
+	int max_hist = 0;
+
 public:
 	afx_msg void OnStnClickedImage();
 };
