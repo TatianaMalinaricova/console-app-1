@@ -105,22 +105,40 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 		BITMAP  bi;
 		CRect r(lpDI->rcItem);
 
-		Histogram();
-
 	//	skalovanie y osi hist = hodnota_hist * vyska_okna / max_hodnota_hist
-		float scaleX = ((float)r.Width()-5) / (float)256;
-		float scaleY = ((float)r.Height()+5) / (float)max_hist;
+		float scaleX = ((float)r.Width()) / (float)256;
+		float scaleY = ((float)r.Height()) / (float)max_hist;
 
 		int i;
 		for (i = 0; i < 256; i++)
 		{
-			pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height()-5) - (int)(scaleY*(float)m_hR[i]), (RGB(255, 0, 0)));
-			pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height() - 5) - (int)(scaleY*(float)m_hG[i]), (RGB(0, 255, 0)));
-			pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height() - 5) - (int)(scaleY*(float)m_hB[i]), (RGB(0, 0, 255)));
+			//bodkovy histogram
+		//	pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height()-5) - (int)(scaleY*(float)m_hR[i]), (RGB(255, 0, 0)));
+		//	pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height() - 5) - (int)(scaleY*(float)m_hG[i]), (RGB(0, 255, 0)));
+		//	pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height() - 5) - (int)(scaleY*(float)m_hB[i]), (RGB(0, 0, 255)));
+
+			//ciarovy histogram
+			CPen penR(PS_SOLID, 1, RGB(255, 0, 0));
+			pDC->SelectObject(&penR);
+			pDC->MoveTo((int)(scaleX*(float)i), r.Height());
+			pDC->LineTo((int)(scaleX*(float)i), r.Height() - (int)(scaleY*(float)m_hR[i]));
+			
+
+			CPen penG(PS_SOLID, 1, RGB(0, 255, 0));
+			pDC->SelectObject(&penG);
+			pDC->MoveTo((int)(scaleX*(float)i), r.Height());
+			pDC->LineTo((int)(scaleX*(float)i), r.Height() - (int)(scaleY*(float)m_hG[i]));
+
+
+			CPen penB(PS_SOLID, 1, RGB(0, 0, 255));
+			pDC->SelectObject(&penB);
+			pDC->MoveTo((int)(scaleX*(float)i), r.Height());
+			pDC->LineTo((int)(scaleX*(float)i), r.Height() - (int)(scaleY*(float)m_hB[i]));
+
 		}
 		
 		//osi
-		CPen pen(PS_SOLID, 1, RGB(0, 0, 0));
+/*		CPen pen(PS_SOLID, 1, RGB(0, 0, 0));
 		pDC->SelectObject(&pen);
 
 		pDC->MoveTo(5, r.Height()-5);
@@ -128,6 +146,7 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 
 		pDC->MoveTo(5, r.Height()-5);
 		pDC->LineTo(r.Width(), r.Height()-5);
+		*/
 	}
 
 	else
@@ -187,11 +206,8 @@ void CApplicationDlg::Histogram()
 				if (m_hB[tmpB] > max_hist)
 					max_hist = m_hB[tmpB];
 			}
-					
-
 		}
 	}
-
 }
 
 LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
@@ -251,7 +267,7 @@ void CApplicationDlg::OnSize(UINT nType,int cx,int cy)
 	
 	if (::IsWindow(m_ctrlHist.GetSafeHwnd()))
 	{
-		m_ctrlHist.MoveWindow(0, 0.5*cy, cx-(cx*0.8) , cy);
+		m_ctrlHist.MoveWindow(0, (int)(0.5*cy), cx - (cx*0.8), (int)(0.5*cy));
 	}
 
 	Invalidate();
@@ -372,6 +388,8 @@ void CApplicationDlg::OnFileOpen()
 		}
 		p_image = new CImage();
 		p_image->Load(path_name);
+
+		Histogram();
 
 		//prekreslenie, zavolane po OnDrawImage
 		Invalidate();
