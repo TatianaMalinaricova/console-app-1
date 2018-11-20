@@ -100,15 +100,15 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 	CDC * pDC = CDC::FromHandle(lpDI->hDC);
 
 	if (p_image != nullptr) {
-		CBitmap bmp;
-		CDC bmDC;
-		BITMAP  bi;
 		CRect r(lpDI->rcItem);
 
 	//	skalovanie y osi hist = hodnota_hist * vyska_okna / max_hodnota_hist
 		float scaleX = ((float)r.Width()) / (float)256;
 		float scaleY = ((float)r.Height()) / (float)max_hist;
-
+		
+		COLORREF farba = RGB(255, 0, 0);
+		Draw_hist(pDC, m_hR, farba, r);
+		
 		int i;
 		for (i = 0; i < 256; i++)
 		{
@@ -118,11 +118,11 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 		//	pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height() - 5) - (int)(scaleY*(float)m_hB[i]), (RGB(0, 0, 255)));
 
 			//ciarovy histogram
-			CPen penR(PS_SOLID, 1, RGB(255, 0, 0));
+/*			CPen penR(PS_SOLID, 1, RGB(0, 255, 0));
 			pDC->SelectObject(&penR);
 			pDC->MoveTo((int)(scaleX*(float)i), r.Height());
-			pDC->LineTo((int)(scaleX*(float)i), r.Height() - (int)(scaleY*(float)m_hR[i]));
-			
+			pDC->LineTo((int)(scaleX*(float)i), r.Height() - (int)(scaleY*(float)v_f[i]));
+*/			
 
 			CPen penG(PS_SOLID, 1, RGB(0, 255, 0));
 			pDC->SelectObject(&penG);
@@ -146,8 +146,9 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 
 		pDC->MoveTo(5, r.Height()-5);
 		pDC->LineTo(r.Width(), r.Height()-5);
-		*/
+*/		
 	}
+
 
 	else
 	{
@@ -165,6 +166,16 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 	return S_OK;
 }
 
+void CApplicationDlg::Draw_hist(CDC *pDC, int *v_f, COLORREF farba, CRect r)
+{
+	Histogram();
+
+	for (int i = 0; i < 256; i++)
+	{
+		pDC->FillSolidRect(((float)r.Width()) / (float)256, ((float)r.Height()) / (float)max_hist,( (float)r.Width()) / (float)256 + 1, (int)((float)r.Height()) / (float)max_hist*(float)v_f[i],farba);
+	}
+
+}
 
 void CApplicationDlg::Histogram()
 {
@@ -390,7 +401,6 @@ void CApplicationDlg::OnFileOpen()
 		p_image->Load(path_name);
 
 		Histogram();
-
 		//prekreslenie, zavolane po OnDrawImage
 		Invalidate();
 	}
