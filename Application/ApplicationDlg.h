@@ -65,8 +65,14 @@ public:
 	afx_msg void OnClose();
 	afx_msg LRESULT OnDrawImage(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnDrawHistogram(WPARAM wParam, LPARAM lParam);
-	afx_msg void Draw_hist(CDC *, int *, COLORREF farba, CRect);
+	afx_msg void Draw_hist(CDC *, int *, COLORREF farba, CRect, float);
 	afx_msg void OnDestroy();
+	afx_msg void OnHistogramRed();
+	afx_msg void OnHistogramGreen();
+	afx_msg void OnHistogramBlue();
+	afx_msg void OnUpdateHistogramRed(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateHistogramGreen(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateHistogramBlue(CCmdUI *pCmdUI);
 
 	void Histogram();
 protected:
@@ -78,6 +84,9 @@ protected:
 	int m_hG[256] = {0};
 	int m_hB[256] = {0};
 	int max_hist = 0;
+	bool checkbox_red = FALSE;
+	bool checkbox_green = FALSE;
+	bool checkbox_blue = FALSE;
 
 public:
 	afx_msg void OnStnClickedImage();

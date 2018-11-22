@@ -85,6 +85,10 @@ BEGIN_MESSAGE_MAP(CApplicationDlg, CDialogEx)
 	ON_MESSAGE(WM_DRAW_HISTOGRAM, OnDrawHistogram)
 	ON_WM_DESTROY()
 	ON_STN_CLICKED(IDC_IMAGE, &CApplicationDlg::OnStnClickedImage)
+	ON_COMMAND(ID_HISTOGRAM_RED, OnHistogramRed)
+	ON_COMMAND(ID_HISTOGRAM_GREEN, OnHistogramGreen)
+	ON_COMMAND(ID_HISTOGRAM_BLUE, OnHistogramBlue)
+
 END_MESSAGE_MAP()
 
 
@@ -103,26 +107,43 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 		CRect r(lpDI->rcItem);
 
 	//	skalovanie y osi hist = hodnota_hist * vyska_okna / max_hodnota_hist
-		float scaleX = ((float)r.Width()) / (float)256;
-		float scaleY = ((float)r.Height()) / (float)max_hist;
-		
-		COLORREF farba = RGB(255, 0, 0);
-		Draw_hist(pDC, m_hR, farba, r);
-		
-		int i;
-		for (i = 0; i < 256; i++)
+//		float scaleX = ((float)r.Width()) / (float)256;
+//		float scaleY = ((float)r.Height()) / (float)max_hist;
+//		float scale = (float)r.Height() / log10f((float)max_hist);
+		float scale = (float)r.Height() / ((float)max_hist);
+
+		if (checkbox_red == TRUE)
 		{
+			COLORREF farbaR = RGB(255, 0, 0);
+			Draw_hist(pDC, m_hR, farbaR, r, scale);
+		}
+
+		if (checkbox_green == TRUE)
+		{
+			COLORREF farbaG = RGB(0, 255, 0);
+			Draw_hist(pDC, m_hG, farbaG, r, scale);
+		}
+
+		if (checkbox_blue == TRUE)
+		{
+			COLORREF farbaB = RGB(0, 0, 255);
+			Draw_hist(pDC, m_hB, farbaB, r, scale);
+		}
+	
+/*		for (int i = 0; i < 256; i++)
+		{
+
 			//bodkovy histogram
 		//	pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height()-5) - (int)(scaleY*(float)m_hR[i]), (RGB(255, 0, 0)));
 		//	pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height() - 5) - (int)(scaleY*(float)m_hG[i]), (RGB(0, 255, 0)));
 		//	pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height() - 5) - (int)(scaleY*(float)m_hB[i]), (RGB(0, 0, 255)));
 
 			//ciarovy histogram
-/*			CPen penR(PS_SOLID, 1, RGB(0, 255, 0));
+			CPen penR(PS_SOLID, 1, RGB(0, 255, 0));
 			pDC->SelectObject(&penR);
 			pDC->MoveTo((int)(scaleX*(float)i), r.Height());
 			pDC->LineTo((int)(scaleX*(float)i), r.Height() - (int)(scaleY*(float)v_f[i]));
-*/			
+			
 
 			CPen penG(PS_SOLID, 1, RGB(0, 255, 0));
 			pDC->SelectObject(&penG);
@@ -135,21 +156,8 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 			pDC->MoveTo((int)(scaleX*(float)i), r.Height());
 			pDC->LineTo((int)(scaleX*(float)i), r.Height() - (int)(scaleY*(float)m_hB[i]));
 
-		}
-		
-		//osi
-/*		CPen pen(PS_SOLID, 1, RGB(0, 0, 0));
-		pDC->SelectObject(&pen);
-
-		pDC->MoveTo(5, r.Height()-5);
-		pDC->LineTo(5, 0);
-
-		pDC->MoveTo(5, r.Height()-5);
-		pDC->LineTo(r.Width(), r.Height()-5);
-*/		
+		}*/
 	}
-
-
 	else
 	{
 		CRect rect(lpDI->rcItem);
@@ -166,13 +174,21 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 	return S_OK;
 }
 
-void CApplicationDlg::Draw_hist(CDC *pDC, int *v_f, COLORREF farba, CRect r)
+void CApplicationDlg::Draw_hist(CDC *pDC, int *v_f, COLORREF farba, CRect r, float scale)
 {
-	Histogram();
-
 	for (int i = 0; i < 256; i++)
 	{
-		pDC->FillSolidRect(((float)r.Width()) / (float)256, ((float)r.Height()) / (float)max_hist,( (float)r.Width()) / (float)256 + 1, (int)((float)r.Height()) / (float)max_hist*(float)v_f[i],farba);
+	/*	pDC->FillSolidRect( (int)((float)i* ((float)r.Width() / (float)256)),
+			r.Height() - (int)(log10f((float)v_f[i]*scale)),
+			(int)((float)1*((float)r.Width() / (float)256)) + 1,
+			(int)(log10f((float)v_f[i])*scale),
+			farba);
+*/
+		pDC->FillSolidRect((int)((float)i* ((float)r.Width() / (float)256)),
+			r.Height() - (int)(((float)v_f[i] * scale)),
+			(int)((float)1 * ((float)r.Width() / (float)256)) + 1,
+			(int)(((float)v_f[i])*scale),
+			farba);
 	}
 
 }
@@ -392,15 +408,31 @@ void CApplicationDlg::OnFileOpen()
 		CString path_name = file_dlg.GetPathName();
 	
 		// rusenie objektu CImage pred vytvorenim noveho
-		if (p_image != nullptr)
+		if (p_image == nullptr)
 		{
-			delete p_image;
-			p_image = nullptr;
+			p_image = new CImage();
+			if (p_image->Load(path_name))
+			{
+				delete p_image;
+				p_image = nullptr;
+			}
+			else
+				Histogram();	
 		}
-		p_image = new CImage();
-		p_image->Load(path_name);
+		else
+		{
+			p_image->Detach();
+			if (p_image->Load(path_name))
+			{
+				delete p_image;
+				p_image = nullptr;
+			}
+			else
+			{
+				Histogram();
+			}
+		}
 
-		Histogram();
 		//prekreslenie, zavolane po OnDrawImage
 		Invalidate();
 	}
@@ -432,4 +464,76 @@ void CApplicationDlg::OnUpdateFileClose(CCmdUI *pCmdUI)
 void CApplicationDlg::OnStnClickedImage()
 {
 	// TODO: Add your control notification handler code here
+}
+
+void CApplicationDlg::OnHistogramRed()
+{
+//	::MessageBox(NULL, __T("Red"), __T("Error"), MB_OK);
+
+	CMenu *Menu = GetMenu();
+	
+	if (GetMenuState(*Menu, ID_HISTOGRAM_RED, MF_BYCOMMAND | MF_CHECKED))
+	{
+		checkbox_red = FALSE;
+		Menu->GetSubMenu(1)->CheckMenuItem(ID_HISTOGRAM_RED, MF_UNCHECKED);
+	}
+	else
+	{
+		Menu->GetSubMenu(1)->CheckMenuItem(ID_HISTOGRAM_RED, MF_CHECKED);
+		checkbox_red = TRUE;
+	}
+	Invalidate();
+
+}
+
+void CApplicationDlg::OnUpdateHistogramRed(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(TRUE);
+}
+
+void CApplicationDlg::OnHistogramGreen()
+{
+	CMenu *Menu = GetMenu();
+
+	if (GetMenuState(*Menu, ID_HISTOGRAM_GREEN, MF_BYCOMMAND | MF_CHECKED))
+	{
+		checkbox_green = FALSE;
+		Menu->GetSubMenu(1)->CheckMenuItem(ID_HISTOGRAM_GREEN, MF_UNCHECKED);
+	}
+	else
+	{
+		Menu->GetSubMenu(1)->CheckMenuItem(ID_HISTOGRAM_GREEN, MF_CHECKED);
+		checkbox_green = TRUE;
+	}
+
+	Invalidate();
+}
+
+void CApplicationDlg::OnUpdateHistogramGreen(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(TRUE);
+}
+
+void CApplicationDlg::OnHistogramBlue()
+{
+	CMenu *Menu = GetMenu();
+
+	if (GetMenuState(*Menu, ID_HISTOGRAM_BLUE, MF_BYCOMMAND | MF_CHECKED))
+	{
+		checkbox_blue = FALSE;
+		Menu->GetSubMenu(1)->CheckMenuItem(ID_HISTOGRAM_BLUE, MF_UNCHECKED);
+	}
+	else
+	{
+		Menu->GetSubMenu(1)->CheckMenuItem(ID_HISTOGRAM_BLUE, MF_CHECKED);
+		checkbox_blue = TRUE;
+	}
+
+	Invalidate();
+
+}
+
+void CApplicationDlg::OnUpdateHistogramBlue(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(TRUE);
 }
