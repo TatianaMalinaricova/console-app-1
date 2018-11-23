@@ -20,6 +20,7 @@ public:
 	void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) override;
 };
 
+
 // CApplicationDlg dialog
 class CApplicationDlg : public CDialogEx
 {
@@ -31,8 +32,9 @@ public:
 		WM_DRAW_HISTOGRAM
 	};
 
-	CApplicationDlg(CWnd* pParent = NULL);	// standard constructor
+	CApplicationDlg(CWnd* pParent = NULL);
 
+	
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_APPLICATION_DIALOG };
@@ -83,6 +85,7 @@ protected:
 	int m_hR[256] = {0};
 	int m_hG[256] = {0};
 	int m_hB[256] = {0};
+	int tmp_hist[256] = {0};
 	int max_hist = 0;
 	bool checkbox_red = FALSE;
 	bool checkbox_green = FALSE;

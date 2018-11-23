@@ -61,6 +61,11 @@ CApplicationDlg::CApplicationDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_APPLICATION_DIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+
+	for (int i = 0; i < 256; i++)
+	{
+		tmp_hist[i] = i;
+	}
 }
 
 void CApplicationDlg::DoDataExchange(CDataExchange* pDX)
@@ -102,16 +107,16 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 	LPDRAWITEMSTRUCT lpDI = (LPDRAWITEMSTRUCT)wParam;
 
 	CDC * pDC = CDC::FromHandle(lpDI->hDC);
+	CRect r(lpDI->rcItem);
+	
 
 	if (p_image != nullptr) {
-		CRect r(lpDI->rcItem);
 
 	//	skalovanie y osi hist = hodnota_hist * vyska_okna / max_hodnota_hist
 //		float scaleX = ((float)r.Width()) / (float)256;
 //		float scaleY = ((float)r.Height()) / (float)max_hist;
-//		float scale = (float)r.Height() / log10f((float)max_hist);
 		float scale = (float)r.Height() / ((float)max_hist);
-
+		
 		if (checkbox_red == TRUE)
 		{
 			COLORREF farbaR = RGB(255, 0, 0);
@@ -129,46 +134,17 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 			COLORREF farbaB = RGB(0, 0, 255);
 			Draw_hist(pDC, m_hB, farbaB, r, scale);
 		}
-	
-/*		for (int i = 0; i < 256; i++)
-		{
-
-			//bodkovy histogram
-		//	pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height()-5) - (int)(scaleY*(float)m_hR[i]), (RGB(255, 0, 0)));
-		//	pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height() - 5) - (int)(scaleY*(float)m_hG[i]), (RGB(0, 255, 0)));
-		//	pDC->SetPixel((int)(scaleX*(float)i)+5, (r.Height() - 5) - (int)(scaleY*(float)m_hB[i]), (RGB(0, 0, 255)));
-
-			//ciarovy histogram
-			CPen penR(PS_SOLID, 1, RGB(0, 255, 0));
-			pDC->SelectObject(&penR);
-			pDC->MoveTo((int)(scaleX*(float)i), r.Height());
-			pDC->LineTo((int)(scaleX*(float)i), r.Height() - (int)(scaleY*(float)v_f[i]));
-			
-
-			CPen penG(PS_SOLID, 1, RGB(0, 255, 0));
-			pDC->SelectObject(&penG);
-			pDC->MoveTo((int)(scaleX*(float)i), r.Height());
-			pDC->LineTo((int)(scaleX*(float)i), r.Height() - (int)(scaleY*(float)m_hG[i]));
-
-
-			CPen penB(PS_SOLID, 1, RGB(0, 0, 255));
-			pDC->SelectObject(&penB);
-			pDC->MoveTo((int)(scaleX*(float)i), r.Height());
-			pDC->LineTo((int)(scaleX*(float)i), r.Height() - (int)(scaleY*(float)m_hB[i]));
-
-		}*/
 	}
 	else
 	{
 		CRect rect(lpDI->rcItem);
-		CBrush brush;
-		brush.CreateSolidBrush(RGB(255, 255, 255));
-
-		pDC->FillRect(&rect, &brush);
-
-		DeleteObject(brush);
-
-		CDC bmDC;
+//		CBrush brush;
+//		brush.CreateSolidBrush(RGB(255, 255, 255));
+//		pDC->FillRect(&rect, &brush);
+//		DeleteObject(brush);
+		float scale = (float)r.Height() / ((float)255);
+		COLORREF farbaB = RGB(0, 0, 255);
+		Draw_hist(pDC, tmp_hist, farbaB, r, scale);
 	}
 
 	return S_OK;
@@ -178,7 +154,7 @@ void CApplicationDlg::Draw_hist(CDC *pDC, int *v_f, COLORREF farba, CRect r, flo
 {
 	for (int i = 0; i < 256; i++)
 	{
-	/*	pDC->FillSolidRect( (int)((float)i* ((float)r.Width() / (float)256)),
+/*		pDC->FillSolidRect( (int)((float)i* ((float)r.Width() / (float)256)),
 			r.Height() - (int)(log10f((float)v_f[i]*scale)),
 			(int)((float)1*((float)r.Width() / (float)256)) + 1,
 			(int)(log10f((float)v_f[i])*scale),
@@ -189,6 +165,7 @@ void CApplicationDlg::Draw_hist(CDC *pDC, int *v_f, COLORREF farba, CRect r, flo
 			(int)((float)1 * ((float)r.Width() / (float)256)) + 1,
 			(int)(((float)v_f[i])*scale),
 			farba);
+			
 	}
 
 }
