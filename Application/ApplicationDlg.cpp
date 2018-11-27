@@ -9,6 +9,7 @@
 #include <utility>
 #include <tuple>
 #include <vector>
+#include <thread>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -113,59 +114,47 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 	if (p_image != nullptr) {
 
 	//	skalovanie y osi hist = hodnota_hist * vyska_okna / max_hodnota_hist
-//		float scaleX = ((float)r.Width()) / (float)256;
-//		float scaleY = ((float)r.Height()) / (float)max_hist;
-		float scale = (float)r.Height() / ((float)max_hist);
+		float rozdiel = (((float)max_hist - (float)min_hist));
+		float scale = (float)r.Height() / rozdiel;
 		
 		if (checkbox_red == TRUE)
 		{
 			COLORREF farbaR = RGB(255, 0, 0);
-			Draw_hist(pDC, m_hR, farbaR, r, scale);
+			Draw_hist(pDC, m_hR, farbaR, r, scale,rozdiel);
 		}
 
 		if (checkbox_green == TRUE)
 		{
 			COLORREF farbaG = RGB(0, 255, 0);
-			Draw_hist(pDC, m_hG, farbaG, r, scale);
+			Draw_hist(pDC, m_hG, farbaG, r, scale,rozdiel);
 		}
 
 		if (checkbox_blue == TRUE)
 		{
 			COLORREF farbaB = RGB(0, 0, 255);
-			Draw_hist(pDC, m_hB, farbaB, r, scale);
+			Draw_hist(pDC, m_hB, farbaB, r, scale,rozdiel);
 		}
 	}
 	else
 	{
 		CRect rect(lpDI->rcItem);
-//		CBrush brush;
-//		brush.CreateSolidBrush(RGB(255, 255, 255));
-//		pDC->FillRect(&rect, &brush);
-//		DeleteObject(brush);
 		float scale = (float)r.Height() / ((float)255);
 		COLORREF farbaB = RGB(0, 0, 255);
-		Draw_hist(pDC, tmp_hist, farbaB, r, scale);
+		Draw_hist(pDC, tmp_hist, farbaB, r, scale,0);
 	}
 
 	return S_OK;
 }
 
-void CApplicationDlg::Draw_hist(CDC *pDC, int *v_f, COLORREF farba, CRect r, float scale)
+void CApplicationDlg::Draw_hist(CDC *pDC, int *v_f, COLORREF farba, CRect r, float scale, float rozdiel)
 {
 	for (int i = 0; i < 256; i++)
 	{
-/*		pDC->FillSolidRect( (int)((float)i* ((float)r.Width() / (float)256)),
-			r.Height() - (int)(log10f((float)v_f[i]*scale)),
-			(int)((float)1*((float)r.Width() / (float)256)) + 1,
-			(int)(log10f((float)v_f[i])*scale),
-			farba);
-*/
 		pDC->FillSolidRect((int)((float)i* ((float)r.Width() / (float)256)),
 			r.Height() - (int)(((float)v_f[i] * scale)),
 			(int)((float)1 * ((float)r.Width() / (float)256)) + 1,
 			(int)(((float)v_f[i])*scale),
 			farba);
-			
 	}
 
 }
@@ -186,21 +175,28 @@ void CApplicationDlg::Histogram()
 
 	int tmpR, tmpG, tmpB;
 	COLORREF pixelColor = 0;
+	BYTE *byte_ptr;
+	int pitch; //kolko realne ma bitmapa na sirku
 	
-	for (i = 0; i < width; i++)
-	{
-		for (j = 0; j < height; j++)
-		{
-			pixelColor = p_image->GetPixel(i, j);
+	byte_ptr = (BYTE *)(p_image->GetBits());
+	pitch = p_image->GetPitch();
 
-			tmpR = int(GetRValue(pixelColor));
-			tmpG = int(GetGValue(pixelColor));
-			tmpB = int(GetBValue(pixelColor));
+
+	for (j = 0; j < height; j++)
+	{
+		for (i = 0; i < width; i++)
+		{
+
+			tmpR = *(byte_ptr + pitch*j + 3 * i);
+			tmpG = *(byte_ptr + pitch*j + 3 * i + 1);
+			tmpB = *(byte_ptr + pitch*j + 3 * i + 2);
+
 
 			m_hR[tmpR]++;
 			m_hG[tmpG]++;
 			m_hB[tmpB]++;
 
+			//maximum histogramu
 			if ((max_hist < m_hR[tmpR]) || (max_hist < m_hG[tmpG]) || (max_hist < m_hB[tmpB]))
 			{
 				max_hist = m_hR[tmpR];
@@ -209,6 +205,17 @@ void CApplicationDlg::Histogram()
 					max_hist = m_hG[tmpG];
 				if (m_hB[tmpB] > max_hist)
 					max_hist = m_hB[tmpB];
+			}
+
+			//minimum histogramu
+			if ((min_hist > m_hR[tmpR]) || (min_hist > m_hG[tmpG]) || (min_hist > m_hB[tmpB]))
+			{
+				min_hist = m_hR[tmpR];
+
+				if (m_hG[tmpG] < min_hist)
+					min_hist = m_hG[tmpG];
+				if (m_hB[tmpB] < min_hist)
+					min_hist = m_hB[tmpB];
 			}
 		}
 	}
@@ -394,7 +401,12 @@ void CApplicationDlg::OnFileOpen()
 				p_image = nullptr;
 			}
 			else
-				Histogram();	
+			{
+				Histogram();
+			//	std::thread first (Histogram());
+			//	first.join();
+			}
+			
 		}
 		else
 		{
