@@ -67,7 +67,7 @@ public:
 	afx_msg void OnClose();
 	afx_msg LRESULT OnDrawImage(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnDrawHistogram(WPARAM wParam, LPARAM lParam);
-	afx_msg void Draw_hist(CDC *, int *, COLORREF farba, CRect, float,float);
+	afx_msg void Draw_hist(CDC *, int *, COLORREF farba, CRect, float);
 	afx_msg void OnDestroy();
 	afx_msg void OnHistogramRed();
 	afx_msg void OnHistogramGreen();

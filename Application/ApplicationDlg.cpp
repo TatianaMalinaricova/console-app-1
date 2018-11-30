@@ -120,19 +120,19 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 		if (checkbox_red == TRUE)
 		{
 			COLORREF farbaR = RGB(255, 0, 0);
-			Draw_hist(pDC, m_hR, farbaR, r, scale,rozdiel);
+			Draw_hist(pDC, m_hR, farbaR, r, scale);
 		}
 
 		if (checkbox_green == TRUE)
 		{
 			COLORREF farbaG = RGB(0, 255, 0);
-			Draw_hist(pDC, m_hG, farbaG, r, scale,rozdiel);
+			Draw_hist(pDC, m_hG, farbaG, r, scale);
 		}
 
 		if (checkbox_blue == TRUE)
 		{
 			COLORREF farbaB = RGB(0, 0, 255);
-			Draw_hist(pDC, m_hB, farbaB, r, scale,rozdiel);
+			Draw_hist(pDC, m_hB, farbaB, r, scale);
 		}
 	}
 	else
@@ -140,23 +140,22 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 		CRect rect(lpDI->rcItem);
 		float scale = (float)r.Height() / ((float)255);
 		COLORREF farbaB = RGB(0, 0, 255);
-		Draw_hist(pDC, tmp_hist, farbaB, r, scale,0);
+		Draw_hist(pDC, tmp_hist, farbaB, r, scale);
 	}
 
 	return S_OK;
 }
 
-void CApplicationDlg::Draw_hist(CDC *pDC, int *v_f, COLORREF farba, CRect r, float scale, float rozdiel)
+void CApplicationDlg::Draw_hist(CDC *pDC, int *v_f, COLORREF farba, CRect r, float scale)
 {
 	for (int i = 0; i < 256; i++)
 	{
 		pDC->FillSolidRect((int)((float)i* ((float)r.Width() / (float)256)),
-			r.Height() - (int)(((float)v_f[i] * scale)),
+			r.Height() - (int)(((float)(v_f[i] - min_hist) * scale)),
 			(int)((float)1 * ((float)r.Width() / (float)256)) + 1,
-			(int)(((float)v_f[i])*scale),
+			(int)(((float)v_f[i]- min_hist)*scale),
 			farba);
 	}
-
 }
 
 void CApplicationDlg::Histogram()
@@ -187,9 +186,9 @@ void CApplicationDlg::Histogram()
 		for (i = 0; i < width; i++)
 		{
 
-			tmpR = *(byte_ptr + pitch*j + 3 * i);
+			tmpB = *(byte_ptr + pitch*j + 3 * i);
 			tmpG = *(byte_ptr + pitch*j + 3 * i + 1);
-			tmpB = *(byte_ptr + pitch*j + 3 * i + 2);
+			tmpR = *(byte_ptr + pitch*j + 3 * i + 2);
 
 
 			m_hR[tmpR]++;
