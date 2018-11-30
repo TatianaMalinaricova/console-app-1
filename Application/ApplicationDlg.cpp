@@ -11,6 +11,10 @@
 #include <vector>
 #include <thread>
 
+#include <future>
+#include <chrono>
+#include <iostream>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -283,7 +287,6 @@ void CApplicationDlg::OnSize(UINT nType,int cx,int cy)
 	Invalidate();
 }
 
-
 void CApplicationDlg::OnClose()
 {
 	EndDialog(0);
@@ -401,9 +404,36 @@ void CApplicationDlg::OnFileOpen()
 			}
 			else
 			{
-				Histogram();
-			//	std::thread first (Histogram());
-			//	first.join();
+		//		Histogram();
+				std::thread t1(&CApplicationDlg::Histogram, this);
+				t1.join();
+
+
+/*				using namespace std::chrono_literals;
+
+				// Create a promise and get its future.
+				std::promise<bool> p;
+				auto future = p.get_future();
+
+				// Run some task on a new thread.
+				std::thread t([&p] {
+					std::this_thread::sleep_for(3s);
+					p.set_value(true); // Is done atomically.
+				});
+
+				// Get thread status using wait_for as before.
+				auto status = future.wait_for(0ms);
+
+				// Print status.
+				if (status == std::future_status::ready) {
+					::MessageBox(NULL, __T("Thread finished."), __T("Error"), MB_OK);
+				}
+				else {
+					::MessageBox(NULL, __T("Thread still running"), __T("Error"), MB_OK);
+				}
+
+				t.join(); // Join thread.
+*/
 			}
 			
 		}
@@ -418,6 +448,8 @@ void CApplicationDlg::OnFileOpen()
 			else
 			{
 				Histogram();
+//				std::thread t1(&CApplicationDlg::Histogram, this);
+//				t1.join();
 			}
 		}
 
@@ -429,12 +461,10 @@ void CApplicationDlg::OnFileOpen()
 	}
 }
 
-
 void CApplicationDlg::OnUpdateFileOpen(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(TRUE);
 }
-
 
 void CApplicationDlg::OnFileClose()
 {
@@ -442,7 +472,6 @@ void CApplicationDlg::OnFileClose()
 	p_image = nullptr;
 	Invalidate();
 }
-
 
 void CApplicationDlg::OnUpdateFileClose(CCmdUI *pCmdUI)
 {
