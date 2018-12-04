@@ -1,1 +1,12 @@
-﻿
+﻿1>------ Build started: Project: Application, Configuration: Release x64 ------
+1>  ApplicationDlg.cpp
+1>ApplicationDlg.cpp(273): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+1>ApplicationDlg.cpp(279): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+1>  Generating code
+1>  4 of 373 functions ( 1.1%) were compiled, the rest were copied from previous compilation.
+1>    0 functions were new in current compilation
+1>    1 functions had inline decision re-evaluated but remain unchanged
+1>  Finished generating code
+1>  Application.vcxproj -> C:\Users\Tatia\Desktop\MPM\4.ročník\ZS\Tvorba softvérových systémov\zadanie1\x64\Release\Application.exe
+1>  Application.vcxproj -> C:\Users\Tatia\Desktop\MPM\4.ročník\ZS\Tvorba softvérových systémov\zadanie1\x64\Release\Application.pdb (Full PDB)
+========== Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========

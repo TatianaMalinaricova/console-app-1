@@ -75,6 +75,7 @@ public:
 	afx_msg void OnUpdateHistogramRed(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateHistogramGreen(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateHistogramBlue(CCmdUI *pCmdUI);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 
 	void Histogram();
 protected:
@@ -91,6 +92,12 @@ protected:
 	bool checkbox_red = FALSE;
 	bool checkbox_green = FALSE;
 	bool checkbox_blue = FALSE;
+	bool m_bhist = false;
+	BYTE *byte_ptr;
+	int pitch; //kolko realne ma bitmapa na sirku
+	int width = 0;
+	int height = 0;
+	UINT_PTR id=0;
 
 public:
 	afx_msg void OnStnClickedImage();

@@ -98,6 +98,7 @@ BEGIN_MESSAGE_MAP(CApplicationDlg, CDialogEx)
 	ON_COMMAND(ID_HISTOGRAM_RED, OnHistogramRed)
 	ON_COMMAND(ID_HISTOGRAM_GREEN, OnHistogramGreen)
 	ON_COMMAND(ID_HISTOGRAM_BLUE, OnHistogramBlue)
+	ON_WM_TIMER()
 
 END_MESSAGE_MAP()
 
@@ -115,7 +116,7 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 	CRect r(lpDI->rcItem);
 	
 
-	if (p_image != nullptr) {
+	if ((p_image != nullptr) && (m_bhist == true)) {
 
 	//	skalovanie y osi hist = hodnota_hist * vyska_okna / max_hodnota_hist
 		float rozdiel = (((float)max_hist - (float)min_hist));
@@ -165,8 +166,6 @@ void CApplicationDlg::Draw_hist(CDC *pDC, int *v_f, COLORREF farba, CRect r, flo
 void CApplicationDlg::Histogram()
 {
 	int i, j;
-	int width = p_image->GetWidth();
-	int height = p_image->GetHeight();
 	max_hist = 0;
 
 	for (i = 0; i < 256; i++)
@@ -178,13 +177,7 @@ void CApplicationDlg::Histogram()
 
 	int tmpR, tmpG, tmpB;
 	COLORREF pixelColor = 0;
-	BYTE *byte_ptr;
-	int pitch; //kolko realne ma bitmapa na sirku
 	
-	byte_ptr = (BYTE *)(p_image->GetBits());
-	pitch = p_image->GetPitch();
-
-
 	for (j = 0; j < height; j++)
 	{
 		for (i = 0; i < width; i++)
@@ -222,6 +215,8 @@ void CApplicationDlg::Histogram()
 			}
 		}
 	}
+
+	m_bhist = true;
 }
 
 LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
@@ -404,36 +399,14 @@ void CApplicationDlg::OnFileOpen()
 			}
 			else
 			{
-		//		Histogram();
+				width = p_image->GetWidth();
+				height = p_image->GetHeight();
+				byte_ptr = (BYTE *)(p_image->GetBits());
+				pitch = p_image->GetPitch();
+				id = SetTimer(1, 100, nullptr);
+				m_bhist = false;
 				std::thread t1(&CApplicationDlg::Histogram, this);
-				t1.join();
-
-
-/*				using namespace std::chrono_literals;
-
-				// Create a promise and get its future.
-				std::promise<bool> p;
-				auto future = p.get_future();
-
-				// Run some task on a new thread.
-				std::thread t([&p] {
-					std::this_thread::sleep_for(3s);
-					p.set_value(true); // Is done atomically.
-				});
-
-				// Get thread status using wait_for as before.
-				auto status = future.wait_for(0ms);
-
-				// Print status.
-				if (status == std::future_status::ready) {
-					::MessageBox(NULL, __T("Thread finished."), __T("Error"), MB_OK);
-				}
-				else {
-					::MessageBox(NULL, __T("Thread still running"), __T("Error"), MB_OK);
-				}
-
-				t.join(); // Join thread.
-*/
+				t1.detach();
 			}
 			
 		}
@@ -447,9 +420,14 @@ void CApplicationDlg::OnFileOpen()
 			}
 			else
 			{
-				Histogram();
-//				std::thread t1(&CApplicationDlg::Histogram, this);
-//				t1.join();
+				width = p_image->GetWidth();
+				height = p_image->GetHeight();
+				byte_ptr = (BYTE *)(p_image->GetBits());
+				pitch = p_image->GetPitch();
+				m_bhist = false;
+				id = SetTimer(1,100,nullptr);
+				std::thread t1(&CApplicationDlg::Histogram, this);
+				t1.detach();
 			}
 		}
 
@@ -553,4 +531,12 @@ void CApplicationDlg::OnHistogramBlue()
 void CApplicationDlg::OnUpdateHistogramBlue(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(TRUE);
+}
+
+void CApplicationDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	if (m_bhist == true) {
+		KillTimer(id);
+		Invalidate();
+	}
 }
