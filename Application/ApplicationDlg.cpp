@@ -99,6 +99,7 @@ BEGIN_MESSAGE_MAP(CApplicationDlg, CDialogEx)
 	ON_COMMAND(ID_HISTOGRAM_GREEN, OnHistogramGreen)
 	ON_COMMAND(ID_HISTOGRAM_BLUE, OnHistogramBlue)
 	ON_WM_TIMER()
+	ON_COMMAND(ID_GRAYSCALE, OnFilterGrayscale)
 
 END_MESSAGE_MAP()
 
@@ -182,11 +183,9 @@ void CApplicationDlg::Histogram()
 	{
 		for (i = 0; i < width; i++)
 		{
-
 			tmpB = *(byte_ptr + pitch*j + 3 * i);
 			tmpG = *(byte_ptr + pitch*j + 3 * i + 1);
 			tmpR = *(byte_ptr + pitch*j + 3 * i + 2);
-
 
 			m_hR[tmpR]++;
 			m_hG[tmpG]++;
@@ -221,6 +220,92 @@ void CApplicationDlg::Histogram()
 
 LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 {
+	LPDRAWITEMSTRUCT lpDI = (LPDRAWITEMSTRUCT)wParam;
+
+	CDC * pDC = CDC::FromHandle(lpDI->hDC);
+
+	//DRAW BITMAP
+	if ((p_image != nullptr) && (checkbox_grayscale == TRUE)) {
+	//	if (checkbox_grayscale == TRUE)
+	//	{
+	//		Grayscale();
+			CBitmap bmp;
+			CDC bmDC;
+			CBitmap *pOldbmp;
+			BITMAP  bi;
+
+			bmp.Attach(grayscale_image->Detach());
+			bmDC.CreateCompatibleDC(pDC);
+
+			CRect r(lpDI->rcItem);
+
+			pOldbmp = bmDC.SelectObject(&bmp);
+			bmp.GetBitmap(&bi);
+
+			pDC->FillSolidRect(r.left, r.top, r.Width(), r.Height(), RGB(255, 255, 255));
+
+			double dWtoH = (double)bi.bmWidth / (double)bi.bmHeight;
+			UINT nHeight = r.Height();
+			UINT nWidth = (UINT)(dWtoH * (double)nHeight);
+
+			if (nWidth > (UINT)r.Width())
+			{
+				nWidth = r.Width();
+				nHeight = (UINT)(nWidth / dWtoH);
+				_ASSERTE(nHeight <= (UINT)r.Height());
+			}
+
+			//aby boli pekne farby
+			pDC->SetStretchBltMode(HALFTONE);
+
+			pDC->StretchBlt(r.left + (r.Width() - nWidth) / 2, r.top + (r.Height() - nHeight) / 2, nWidth, nHeight, &bmDC, 0, 0, bi.bmWidth, bi.bmHeight, SRCCOPY);
+			bmDC.SelectObject(pOldbmp);
+
+			grayscale_image->Attach((HBITMAP)bmp.Detach());
+			return S_OK;
+		}
+
+		if(p_image!=nullptr)
+		{
+			CBitmap bmp;
+			CDC bmDC;
+			CBitmap *pOldbmp;
+			BITMAP  bi;
+
+			bmp.Attach(p_image->Detach());
+			bmDC.CreateCompatibleDC(pDC);
+
+			CRect r(lpDI->rcItem);
+
+			pOldbmp = bmDC.SelectObject(&bmp);
+			bmp.GetBitmap(&bi);
+
+			pDC->FillSolidRect(r.left, r.top, r.Width(), r.Height(), RGB(255, 255, 255));
+
+			double dWtoH = (double)bi.bmWidth / (double)bi.bmHeight;
+			UINT nHeight = r.Height();
+			UINT nWidth = (UINT)(dWtoH * (double)nHeight);
+
+			if (nWidth > (UINT)r.Width())
+			{
+				nWidth = r.Width();
+				nHeight = (UINT)(nWidth / dWtoH);
+				_ASSERTE(nHeight <= (UINT)r.Height());
+			}
+
+			//aby boli pekne farby
+			pDC->SetStretchBltMode(HALFTONE);
+
+			pDC->StretchBlt(r.left + (r.Width() - nWidth) / 2, r.top + (r.Height() - nHeight) / 2, nWidth, nHeight, &bmDC, 0, 0, bi.bmWidth, bi.bmHeight, SRCCOPY);
+			bmDC.SelectObject(pOldbmp);
+
+			p_image->Attach((HBITMAP)bmp.Detach());
+
+			return S_OK;
+		}
+//	}
+
+/*
 	LPDRAWITEMSTRUCT lpDI = (LPDRAWITEMSTRUCT)wParam;
 
 	CDC * pDC = CDC::FromHandle(lpDI->hDC);
@@ -263,7 +348,7 @@ LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 
 		return S_OK;
 	}
-	
+	*/
 }
 
 void CApplicationDlg::OnSize(UINT nType,int cx,int cy)
@@ -396,6 +481,10 @@ void CApplicationDlg::OnFileOpen()
 			{
 				delete p_image;
 				p_image = nullptr;
+
+				delete grayscale_image;
+				grayscale_image = nullptr;
+
 			}
 			else
 			{
@@ -403,20 +492,29 @@ void CApplicationDlg::OnFileOpen()
 				height = p_image->GetHeight();
 				byte_ptr = (BYTE *)(p_image->GetBits());
 				pitch = p_image->GetPitch();
+
 				id = SetTimer(1, 100, nullptr);
 				m_bhist = false;
+				m_bgrayscale = false;
+
 				std::thread t1(&CApplicationDlg::Histogram, this);
 				t1.detach();
-			}
-			
+
+				std::thread t2(&CApplicationDlg::Grayscale, this);
+				t2.detach();
+			}	
 		}
 		else
 		{
 			p_image->Detach();
+			grayscale_image->Detach();
 			if (p_image->Load(path_name))
 			{
 				delete p_image;
 				p_image = nullptr;
+
+				delete grayscale_image;
+				grayscale_image = nullptr;
 			}
 			else
 			{
@@ -425,9 +523,14 @@ void CApplicationDlg::OnFileOpen()
 				byte_ptr = (BYTE *)(p_image->GetBits());
 				pitch = p_image->GetPitch();
 				m_bhist = false;
+				m_bgrayscale = false;
+
 				id = SetTimer(1,100,nullptr);
 				std::thread t1(&CApplicationDlg::Histogram, this);
 				t1.detach();
+
+				std::thread t2(&CApplicationDlg::Grayscale, this);
+				t2.detach();
 			}
 		}
 
@@ -448,6 +551,10 @@ void CApplicationDlg::OnFileClose()
 {
 	delete p_image;
 	p_image = nullptr;
+
+	delete grayscale_image;
+	grayscale_image = nullptr;
+
 	Invalidate();
 }
 
@@ -539,4 +646,57 @@ void CApplicationDlg::OnTimer(UINT_PTR nIDEvent)
 		KillTimer(id);
 		Invalidate();
 	}
+
+	if (m_bgrayscale == true) {
+		KillTimer(id);
+		Invalidate();
+	}
+}
+
+void CApplicationDlg::OnFilterGrayscale()
+{
+	CMenu *Menu = GetMenu();
+
+	if (GetMenuState(*Menu, ID_GRAYSCALE, MF_BYCOMMAND | MF_CHECKED))
+	{
+		checkbox_grayscale = FALSE;
+		Menu->GetSubMenu(2)->CheckMenuItem(ID_GRAYSCALE, MF_UNCHECKED);
+	}
+	else
+	{
+		Menu->GetSubMenu(2)->CheckMenuItem(ID_GRAYSCALE, MF_CHECKED);
+		checkbox_grayscale = TRUE;
+	}
+
+	Invalidate();
+}
+
+void CApplicationDlg::OnUpdateFilterGrayscale(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(TRUE);
+}
+
+void CApplicationDlg::Grayscale()
+{
+	grayscale_image = new CImage();
+	grayscale_image->Create(width, height, p_image->GetBPP(), 0);
+	p_image->BitBlt(grayscale_image->GetDC(), 0, 0, SRCCOPY);
+	grayscale_image->ReleaseDC();
+
+	int i, j;
+	float tmpR, tmpG, tmpB, tmp;
+	for (j = 0; j < height; j++)
+	{
+		for (i = 0; i < width; i++)
+		{
+			tmpB = *(byte_ptr + pitch*j + 3 * i);
+			tmpG = *(byte_ptr + pitch*j + 3 * i + 1);
+			tmpR = *(byte_ptr + pitch*j + 3 * i + 2);
+
+			tmp = sqrt(tmpB*tmpB + tmpG*tmpG + tmpR*tmpR) / 3;
+			grayscale_image->SetPixelRGB(i, j, (BYTE)tmp, (BYTE)tmp, (BYTE)tmp);
+		}
+	}
+	::MessageBox(NULL, __T("Dopocitane grayscale."), __T("Error"), MB_OK);
+	m_bgrayscale = true;
 }

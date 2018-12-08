@@ -51,6 +51,7 @@ protected:
 protected:
 	HICON m_hIcon;
 	CImage *p_image = nullptr;
+	CImage *grayscale_image = nullptr;
 	// Generated message map functions
 	BOOL OnInitDialog() override;
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
@@ -76,8 +77,11 @@ public:
 	afx_msg void OnUpdateHistogramGreen(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateHistogramBlue(CCmdUI *pCmdUI);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnFilterGrayscale();
+	afx_msg void OnUpdateFilterGrayscale(CCmdUI *pCmdUI);
 
 	void Histogram();
+	void Grayscale();
 protected:
 	CStaticImage m_ctrlImage;
 	CStaticHistogram m_ctrlHist;
@@ -89,15 +93,17 @@ protected:
 	int tmp_hist[256] = {0};
 	int max_hist = 0;
 	int min_hist = 0;
-	bool checkbox_red = FALSE;
-	bool checkbox_green = FALSE;
-	bool checkbox_blue = FALSE;
+	bool checkbox_red = true;
+	bool checkbox_green = true;
+	bool checkbox_blue = true;
 	bool m_bhist = false;
 	BYTE *byte_ptr;
 	int pitch; //kolko realne ma bitmapa na sirku
 	int width = 0;
 	int height = 0;
 	UINT_PTR id=0;
+	bool checkbox_grayscale = FALSE;
+	bool m_bgrayscale = false;
 
 public:
 	afx_msg void OnStnClickedImage();
