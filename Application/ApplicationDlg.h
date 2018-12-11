@@ -97,13 +97,18 @@ protected:
 	bool checkbox_green = true;
 	bool checkbox_blue = true;
 	bool m_bhist = false;
-	BYTE *byte_ptr;
+	BYTE *byte_ptr_orig;
 	int pitch; //kolko realne ma bitmapa na sirku
 	int width = 0;
 	int height = 0;
 	UINT_PTR id=0;
 	bool checkbox_grayscale = FALSE;
 	bool m_bgrayscale = false;
+	BYTE *byte_ptr_g;
+	BYTE *byte_ptr;
+	bool draw_orig = false;
+	bool draw_gray = false;
+
 
 public:
 	afx_msg void OnStnClickedImage();

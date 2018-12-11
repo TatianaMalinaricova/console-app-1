@@ -168,6 +168,7 @@ void CApplicationDlg::Histogram()
 {
 	int i, j;
 	max_hist = 0;
+	min_hist = 0;
 
 	for (i = 0; i < 256; i++)
 	{
@@ -262,7 +263,15 @@ LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 			bmDC.SelectObject(pOldbmp);
 
 			grayscale_image->Attach((HBITMAP)bmp.Detach());
-			return S_OK;
+
+			byte_ptr = byte_ptr_g;
+			Histogram();
+//			id = SetTimer(1, 100, nullptr);
+//			draw_gray = false;
+//			std::thread t(&CApplicationDlg::Histogram, this);
+//			t.detach();
+
+			return S_OK;	
 		}
 
 		if(p_image!=nullptr)
@@ -301,10 +310,15 @@ LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 
 			p_image->Attach((HBITMAP)bmp.Detach());
 
+			byte_ptr = byte_ptr_orig;
+			Histogram();
+//			id = SetTimer(1, 100, nullptr);
+//			draw_orig = false;
+//			std::thread t(&CApplicationDlg::Histogram, this);
+//			t.detach();
+
 			return S_OK;
 		}
-//	}
-
 /*
 	LPDRAWITEMSTRUCT lpDI = (LPDRAWITEMSTRUCT)wParam;
 
@@ -490,18 +504,22 @@ void CApplicationDlg::OnFileOpen()
 			{
 				width = p_image->GetWidth();
 				height = p_image->GetHeight();
-				byte_ptr = (BYTE *)(p_image->GetBits());
+				byte_ptr_orig = (BYTE *)(p_image->GetBits());
 				pitch = p_image->GetPitch();
 
 				id = SetTimer(1, 100, nullptr);
 				m_bhist = false;
 				m_bgrayscale = false;
+				draw_gray = false;
+				draw_orig = false;
 
+				byte_ptr = byte_ptr_orig;
 				std::thread t1(&CApplicationDlg::Histogram, this);
 				t1.detach();
 
 				std::thread t2(&CApplicationDlg::Grayscale, this);
 				t2.detach();
+
 			}	
 		}
 		else
@@ -520,11 +538,12 @@ void CApplicationDlg::OnFileOpen()
 			{
 				width = p_image->GetWidth();
 				height = p_image->GetHeight();
-				byte_ptr = (BYTE *)(p_image->GetBits());
+				byte_ptr_orig = (BYTE *)(p_image->GetBits());
 				pitch = p_image->GetPitch();
 				m_bhist = false;
 				m_bgrayscale = false;
 
+				byte_ptr = byte_ptr_orig;
 				id = SetTimer(1,100,nullptr);
 				std::thread t1(&CApplicationDlg::Histogram, this);
 				t1.detach();
@@ -644,13 +663,26 @@ void CApplicationDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	if (m_bhist == true) {
 		KillTimer(id);
+		//draw_orig = true;
 		Invalidate();
 	}
 
-	if (m_bgrayscale == true) {
+	if (m_bgrayscale == false) {
 		KillTimer(id);
+		draw_gray = true;
 		Invalidate();
 	}
+
+/*	if ((m_bhist == false) && (draw_orig == false)) {
+		draw_orig = true;
+		Invalidate();
+	}
+
+	if ((m_bgrayscale == false) && (draw_gray == false)) {
+		draw_gray = true;
+		Invalidate();
+	}
+	*/
 }
 
 void CApplicationDlg::OnFilterGrayscale()
@@ -694,9 +726,11 @@ void CApplicationDlg::Grayscale()
 			tmpR = *(byte_ptr + pitch*j + 3 * i + 2);
 
 			tmp = sqrt(tmpB*tmpB + tmpG*tmpG + tmpR*tmpR) / 3;
+
 			grayscale_image->SetPixelRGB(i, j, (BYTE)tmp, (BYTE)tmp, (BYTE)tmp);
 		}
 	}
 	::MessageBox(NULL, __T("Dopocitane grayscale."), __T("Error"), MB_OK);
 	m_bgrayscale = true;
+	byte_ptr_g = (BYTE *)(grayscale_image->GetBits());
 }
